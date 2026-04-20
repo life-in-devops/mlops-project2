@@ -1,5 +1,7 @@
 import os
 import joblib
+import mlflow
+import mlflow.sklearn
 
 from preprocess import (
     load_data,
@@ -22,56 +24,64 @@ from sklearn.metrics import accuracy_score
 
 
 def main():
-    print("🚀 Starting training pipeline...")
+    print("🚀 Starting MLflow training pipeline...")
 
-    # 🔹 Load data
-    df = load_data(DATA_PATH)
-    print(f"✅ Data loaded. Shape: {df.shape}")
+    # 🔹 Set experiment
+    mlflow.set_experiment("churn-prediction")
 
-    # 🔹 Preprocessing pipeline
-    df = clean_data(df)
-    df = feature_engineering(df)
-    df = encode(df)
+    with mlflow.start_run():
 
-    print(f"✅ Data after preprocessing: {df.shape}")
+        # 🔹 Load data
+        df = load_data(DATA_PATH)
 
-    # 🔹 Split features/target
-    X, y = split(df, "Churn")
+        # 🔹 Preprocessing
+        df = clean_data(df)
+        df = feature_engineering(df)
+        df = encode(df)
 
-    # 🔹 Train-test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=TEST_SIZE,
-        random_state=RANDOM_STATE
-    )
+        X, y = split(df, "Churn")
 
-    print(f"📊 Train shape: {X_train.shape}, Test shape: {X_test.shape}")
+        # 🔹 Split
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=TEST_SIZE,
+            random_state=RANDOM_STATE
+        )
 
-    # 🔹 Model initialization
-    model = RandomForestClassifier(
-        **MODEL_PARAMS,
-        random_state=RANDOM_STATE
-    )
+        # 🔹 Model
+        model = RandomForestClassifier(
+            **MODEL_PARAMS,
+            random_state=RANDOM_STATE
+        )
 
-    # 🔹 Train
-    model.fit(X_train, y_train)
-    print("✅ Model training completed")
+        # 🔹 Train
+        model.fit(X_train, y_train)
 
-    # 🔹 Evaluate
-    preds = model.predict(X_test)
-    acc = accuracy_score(y_test, preds)
+        # 🔹 Predict
+        preds = model.predict(X_test)
+        acc = accuracy_score(y_test, preds)
 
-    print(f"🎯 Accuracy: {acc:.4f}")
+        print(f"🎯 Accuracy: {acc:.4f}")
 
-    # 🔹 Save model
-    model_dir = os.path.join(os.path.dirname(__file__), "..", "models")
-    os.makedirs(model_dir, exist_ok=True)
+        # 🔹 Log parameters
+        mlflow.log_params(MODEL_PARAMS)
+        mlflow.log_param("test_size", TEST_SIZE)
 
-    model_path = os.path.join(model_dir, "model.joblib")
-    joblib.dump(model, model_path)
+        # 🔹 Log metrics
+        mlflow.log_metric("accuracy", acc)
 
-    print(f"💾 Model saved at: {model_path}")
+        # 🔹 Save model locally
+        model_dir = os.path.join(os.path.dirname(__file__), "..", "models")
+        os.makedirs(model_dir, exist_ok=True)
+
+        model_path = os.path.join(model_dir, "model.joblib")
+        joblib.dump(model, model_path)
+
+        # 🔹 Log model to MLflow
+        mlflow.sklearn.log_model(model, "model")
+
+        print("✅ Model logged to MLflow")
 
 
 if __name__ == "__main__":
