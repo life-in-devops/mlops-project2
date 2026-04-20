@@ -3,8 +3,8 @@ __pycache__/
 *.pyc
 venv/
 
-# Data (avoid large files)
-data/*.csv
+# # Data (avoid large files)
+# data/*.csv
 
 # Models
 models/
