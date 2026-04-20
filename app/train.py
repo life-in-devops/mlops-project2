@@ -26,6 +26,9 @@ from sklearn.metrics import accuracy_score
 def main():
     print("🚀 Starting MLflow training pipeline...")
 
+    # 🔹 Set MLflow tracking server (EC2)
+    mlflow.set_tracking_uri("http://13.205.161.57:5000")
+
     # 🔹 Set experiment
     mlflow.set_experiment("churn-prediction")
 
