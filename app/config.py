@@ -1,4 +1,9 @@
-DATA_PATH = "../data/raw.csv"
+import os
+
+DATA_PATH = os.getenv("DATA_PATH")
+
+if not DATA_PATH:
+    raise ValueError("DATA_PATH environment variable is not set")
 
 TARGET_COLUMN = "Churn"
 

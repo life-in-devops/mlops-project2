@@ -3,3 +3,4 @@ scikit-learn
 mlflow
 joblib
 boto3
+s3fs
